@@ -1,0 +1,44 @@
+#!/bin/bash
+
+#!/usr/bin/env perl
+
+grep -v '^#' |
+perl -e '
+	sub readl {
+		$_ = <STDIN>;
+	#	last if eof STDIN;
+		exit if not @data and defined $r;
+	}
+
+	while (1) {
+		readl;
+
+		if (/^P3$/) {
+			readl;
+			($w, $h) = /(\d+) (\d+)/;
+			readl;
+		} else {
+			push @data, split(" ", $_);
+
+			$r = shift @data;
+			$g = shift @data;
+			$b = shift @data;
+
+			print "$r/$g/$b";
+		#	print " $x $w $y $h";
+
+			if (++$x < $w) {
+				print " ";
+			} else {
+				print "\n";
+				$x = 0;
+				$y++;
+			}
+
+			if ($y == $h) {
+				print "\n";
+				$y = 0;
+			}
+		}
+	}
+'	

@@ -1,0 +1,66 @@
+#!/usr/bin/env perl
+use Time::HiRes usleep;
+
+$default_sleep = $ARGV[0] || .05;
+
+if ($ENV{TERM} eq "linux") {
+	$linux = 1;
+	# system "tput bold";
+	system "setterm --background black";
+	system "setterm --foreground white";
+}
+
+$go_home = `tput home`;
+
+print $go_home;
+
+sub reset_term {
+	if ($linux) {
+		system "reset";
+	} else {
+		system "tput sgr0";
+	}
+	exit;
+}
+
+$SIG{INT} = \&reset_term;
+
+while(<STDIN>) {
+	chomp;
+	if (/ /) {
+		if ($line++ % 2) {
+			@fg = split / /, $_;
+			for ($i=0; $i < @fg; $i++) {
+				$bg = $bg[$i];
+				$fg = $fg[$i];
+				($fr, $fg, $fb) = split /\//, $fg;
+				($br, $bg, $bb) = split /\//, $bg;
+				if ($linux) {
+					$fgc = sprintf "\e]P7%02x%02x%02x", $fr, $fg, $fb;
+					$bgc = sprintf "\e]P0%02x%02x%02x", $br, $bg, $bb;
+					print "$bgc${fgc}m";
+				} else {
+					$fgc = "\e[38;2;$fr;$fg;${fb}m";
+					$bgc = "\e[48;2;$br;$bg;${bb}m";
+					print "$bgc$fgc▄";
+				}
+			}
+			print "\n";
+		} else {
+			@bg = split / /, $_;
+		}
+	} else {
+		$sleep =  $default_sleep || $_;
+		if (not -t STDOUT) {
+			print "$sleep\n";
+		}
+		print $go_home;
+		# print STDERR "usleep $sleep"; # 
+		flush STDOUT;
+		if ( -t STDOUT) {
+			usleep 1000000 * $sleep;
+		}
+	}
+}
+
+reset_term;
